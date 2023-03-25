@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react"
+import { useState, useMemo, useEffect } from "react"
 // @ts-ignore
 import { getLanguages, generateRandomCode } from "@whitep4nth3r/random-code"
 import type { Languages } from "../types/random-code"
@@ -59,14 +59,22 @@ function App() {
   },[options])
 
   return (
-    <main className="w-full min-h-screen relative flex justify-center bg-neutral-900">
-      <div className="pt-16 pb-64 flex flex-col items-center w-full xl:max-w-5xl">
+    <main className="w-full min-h-screen relative flex flex-col items-center justify-between bg-neutral-900">
+      <div className="pt-16 pb-16 flex flex-col items-center w-full xl:max-w-5xl">
         <h1 className="text-3xl text-white font-bold">
           <span className="text-green-500">Code</span>
           Typer
         </h1>
         <section className="flex flex-col items-center gap-6 my-12">
-          <TextArea generatedCode={generatedCode} generateNewCode={()=>setGeneratedCode(generateCode(options.language))} language={options.language} setRawCPM={setRawCPM} setIncorrectCharacters={setIncorrectCharacters} disabled={timer === 0}/>
+          <TextArea
+            generatedCode={generatedCode} 
+            generateNewCode={()=>setGeneratedCode(generateCode(options.language))} 
+            language={options.language} 
+            setRawCPM={setRawCPM}
+            setIncorrectCharacters={setIncorrectCharacters} 
+            incorrectCharacters={incorrectCharacters}
+            disabled={timer === 0}
+          />
           <div className="flex flex-wrap gap-4">
             <SmallCard className="text-center">
               <span className="text-2xl font-semibold">{Math.ceil((rawCPM/((options.seconds - timer) || 1))*60) || 0}</span>
@@ -90,7 +98,7 @@ function App() {
               <p>{Math.round((rawCPM/(incorrectCharacters+rawCPM))*100) || '-'}{Math.round((rawCPM/(incorrectCharacters+rawCPM))*100) ? '%' : null}</p>
             </div>
             <div className="flex justify-between">
-              <p>Raw CPM</p>
+              <p>Correct Characters</p>
               <p>{rawCPM}</p>
             </div>
             <div className="flex justify-between">
@@ -104,7 +112,7 @@ function App() {
               <div className="flex flex-wrap justify-center xl:justify-start gap-2">
                 {languageKeys.map((languageKey)=>{
                   return(
-                    <button onClick={()=>setCurrentLanguage(languageKey)} className={`text-neutral-400 bg-neutral-800 text-xl hover:text-white px-6 py-2 rounded-md ${languageKey === options.language && '!bg-neutral-700 !text-white'}`}>{languages[languageKey]}</button>
+                    <button onClick={()=>setCurrentLanguage(languageKey)} className={`transition text-neutral-400 bg-neutral-800 text-xl hover:text-white px-6 py-2 rounded-md ${languageKey === options.language && '!bg-neutral-700 !text-white'}`}>{languages[languageKey]}</button>
                   )
                 })}
               </div>
@@ -113,13 +121,16 @@ function App() {
               <h1 className="text-white text-2xl font-semibold">Duration</h1>
               <div className="flex flex-wrap justify-center xl:justify-start gap-2">
                 {durations.map((duration)=>(
-                  <button className={`text-neutral-400 bg-neutral-800 text-xl hover:text-white px-6 py-2 rounded-md ${duration === options.seconds && '!bg-neutral-700 !text-white'}`} onClick={()=>setDuration(duration)}>{Math.floor(duration/60)}:{(duration%60).toString().padStart(2, '0')}</button>
+                  <button className={`transition text-neutral-400 bg-neutral-800 text-xl hover:text-white px-6 py-2 rounded-md ${duration === options.seconds && '!bg-neutral-700 !text-white'}`} onClick={()=>setDuration(duration)}>{Math.floor(duration/60)}:{(duration%60).toString().padStart(2, '0')}</button>
                 ))}
               </div>
             </div>
           </div>
         </section>
       </div>
+      <footer className="text-neutral-400 py-4">
+        Inspired by <a className="hover:underline" href="https://typetest.io/">typetest.io</a>
+      </footer>
     </main>
   )
 }

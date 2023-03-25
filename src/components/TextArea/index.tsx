@@ -11,9 +11,10 @@ interface TextAreaProp {
     disabled: boolean
     generatedCode: string
     generateNewCode: Function
+    incorrectCharacters: number
 }
 
-const TextArea = ({language = 'js', setRawCPM, disabled, generatedCode, generateNewCode, setIncorrectCharacters}: TextAreaProp) => {
+const TextArea = ({language = 'js', setRawCPM, disabled, generatedCode, generateNewCode, setIncorrectCharacters, incorrectCharacters}: TextAreaProp) => {
     const [codeInput, setCodeInput] = useState('')
     const [isCodeAreaFocused, setIsCodeAreaFocused] = useState(false)
     const [activeCodePartial, setActiveCodePartial] = useState('')
@@ -22,6 +23,7 @@ const TextArea = ({language = 'js', setRawCPM, disabled, generatedCode, generate
     const [codePartials, setCodePartials] = useState<string[]>([''])
     const codeEditorRef = useRef<HTMLTextAreaElement>(null)
     const codePartialRef = useRef<HTMLDivElement>(null)
+    const [activeTextColor, setActiveTextColor] = useState('text-neutral-500')
 
     useEffect(() => {
         const enterHandler = (e: KeyboardEvent) => {
@@ -100,6 +102,17 @@ const TextArea = ({language = 'js', setRawCPM, disabled, generatedCode, generate
         }
     },[codeInput.split(/\r?\n|\r|\n/g).length === activeCodePartial.split(/\r?\n|\r|\n/g).length+1])
 
+    const handleIncorrectCharacter = () => {
+        setActiveTextColor('text-red-400')
+        setTimeout(() => setActiveTextColor('text-neutral-500'), 200); 
+    }
+
+    useEffect(()=>{
+        if(incorrectCharacters){
+            handleIncorrectCharacter()
+        }
+    },[incorrectCharacters])
+
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if(e.key !== activeCodePartial.charAt(codeInput.length) && e.key.length === 1) setIncorrectCharacters(prevState => prevState + 1) 
         if(e.key === "Backspace" && codeInput.charAt(codeInput.length-1) !== ' ' && codeInput){
@@ -133,7 +146,7 @@ const TextArea = ({language = 'js', setRawCPM, disabled, generatedCode, generate
                     onPaste={()=> false}
                 />
             </div>
-            <div ref={codePartialRef} className="select-none whitespace-pre-wrap text-neutral-500 text-lg pointer-events-none px-[0.625rem] py-[0.625rem]">
+            <div ref={codePartialRef} className={`transition select-none whitespace-pre-wrap ${activeTextColor} text-lg pointer-events-none px-[0.625rem] py-[0.625rem]`}>
                 {activeCodePartial}
             </div>
         </div>
