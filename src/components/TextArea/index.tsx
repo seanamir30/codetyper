@@ -83,7 +83,7 @@ const TextArea = ({language = 'js', setRawCPM, disabled, generatedCode, generate
         setCodeInput('')
         const partials = generatedCode.split(/\r?\n|\r|\n/g)
         setCodePartials(partials)
-        setActiveCodePartial(partials.slice(0,10).join('\n'))
+        setActiveCodePartial(partials.slice(0,10).map(partial => partial.trimEnd()).join('\n'))
         setCodePartialStart(0)
         setCodePartialEnd(10)
     },[language, generatedCode])
@@ -114,6 +114,7 @@ const TextArea = ({language = 'js', setRawCPM, disabled, generatedCode, generate
     },[incorrectCharacters])
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        codeEditorRef.current?.setSelectionRange(codeInput.length, codeInput.length)
         if(e.key !== activeCodePartial.charAt(codeInput.length) && e.key.length === 1) setIncorrectCharacters(prevState => prevState + 1) 
         if(e.key === "Backspace" && codeInput.charAt(codeInput.length-1) !== ' ' && codeInput){
             setIncorrectCharacters(prevState => prevState + 1)
