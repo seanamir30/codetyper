@@ -123,8 +123,8 @@ const TextArea = ({language = 'js', setRawCPM, disabled, generatedCode, generate
         }
         if(
             ((e.key !== activeCodePartial.charAt(codeInput.length)) && (e.key !== "Backspace")) ||
-            (activeCodePartial.charAt(codeInput.length) === '\n' && e.key !=='Enter')
-        ) {
+            (activeCodePartial.charAt(codeInput.length) === '\n' && e.key !=='Enter' && e.key !== "Backspace")
+            ) {
             e.preventDefault()
             return
         }
