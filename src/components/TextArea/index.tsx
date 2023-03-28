@@ -33,7 +33,7 @@ const TextArea = ({language = 'js', setRawCPM, disabled, generatedCode, generate
                     e.stopPropagation()
                     return
                 }
-                if(codePartialRef.current.innerHTML[codeEditorRef.current?.innerHTML.length || 0] !== '\n'){
+                if(codePartialRef.current.innerHTML[codeEditorRef.current?.innerHTML.length || 0] !== '\n' && codePartialRef.current.innerHTML[codeEditorRef.current?.innerHTML.length || 0] !== undefined){
                     setIncorrectCharacters(prevState => prevState + 1)
                     e.preventDefault()
                     e.stopPropagation()
@@ -43,7 +43,7 @@ const TextArea = ({language = 'js', setRawCPM, disabled, generatedCode, generate
 
         const tabHandler = (e: KeyboardEvent) => {
             if(e.key=='Tab' && codePartialRef.current){
-                if(codeEditorRef.current?.innerHTML === ''){
+                if(codeEditorRef.current?.innerHTML === '' && !codePartialStart){
                     e.preventDefault()
                     e.stopPropagation()
                     return
