@@ -18,7 +18,7 @@ function App() {
   const [durations, _] = useState([10, 30, 60, 120, 300])
 
   useEffect(()=>{
-    axios.post(process.env.VITE_ANALYTICS_URL || '', {
+    axios.post(import.meta.env.VITE_ANALYTICS_URL || '', {
       url: window.location.href,
       userAgent: window.navigator.userAgent
     })
