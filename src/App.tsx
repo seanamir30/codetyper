@@ -3,6 +3,7 @@ import { useState, useMemo, useEffect } from "react"
 import { getLanguages, generateRandomCode } from "@whitep4nth3r/random-code"
 import type { Languages } from "../types/random-code"
 import TextArea from "./components/TextArea"
+import axios from "axios"
 import SmallCard from "./components/SmallCard"
 
 function App() {
@@ -15,6 +16,13 @@ function App() {
   const [timer, setTimer] = useState(10);
   const [generatedCode, setGeneratedCode] = useState('')
   const [durations, _] = useState([10, 30, 60, 120, 300])
+
+  useEffect(()=>{
+    axios.post(process.env.NEXT_PUBLIC_ANALYTICS_URL || '', {
+      url: window.location.href,
+      userAgent: window.navigator.userAgent
+    })
+  },[])
 
   const setCurrentLanguage = (language: keyof Languages) => {
     setOptions(prevState => ({
