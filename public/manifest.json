@@ -1,0 +1,9 @@
+{
+  "name": "CodeTyper - Typing Test for Programmers",
+  "short_name": "CodeTyper",
+  "description": "Practice typing with real code! A specialized typing test for programmers.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#171717",
+  "theme_color": "#10b981"
+} 
