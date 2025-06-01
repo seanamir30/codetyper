@@ -1,5 +1,17 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /analytics/
 
 # Sitemap
-Sitemap: https://codetyper.com/sitemap.xml 
+Sitemap: https://codetyper.seancafe.com/sitemap.xml
+
+# Crawl-delay for better server performance
+Crawl-delay: 1
+
+# Popular search engine specific directives
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: / 

@@ -1,9 +1,21 @@
 {
   "name": "CodeTyper - Typing Test for Programmers",
   "short_name": "CodeTyper",
-  "description": "Practice typing with real code! A specialized typing test for programmers.",
+  "description": "Practice typing with real code! A specialized typing test for programmers featuring multiple programming languages including JavaScript, Python, Java, and more.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#171717",
-  "theme_color": "#10b981"
+  "theme_color": "#10b981",
+  "lang": "en",
+  "orientation": "any",
+  "categories": ["developer", "productivity", "education", "tools"],
+  "keywords": "typing test, programming, code typing, developer tools, typing speed, JavaScript, Python, Java, coding practice",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
 } 
