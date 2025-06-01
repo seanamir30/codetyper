@@ -143,19 +143,28 @@ function App() {
 
       <main className="w-full min-h-screen relative flex flex-col items-center justify-between bg-neutral-900">
         {/* Header */}
-        <header className="pt-8 flex flex-col items-center w-full xl:max-w-5xl">
+        <header className="pt-8 flex flex-col items-center w-full md:max-w-5xl">
           <h1 className="text-3xl text-white font-bold">
             <span className="text-green-500">Code</span>
             Typer
           </h1>
-          <p className="text-neutral-300 text-center mt-4 max-w-2xl px-4">
-            Improve your programming typing speed with real code snippets. 
-            Practice typing in multiple programming languages and track your progress.
-          </p>
+          <div className='flex flex-col md:flex-row justify-between items-end'>
+            <p className="text-neutral-300 mt-4 px-4">
+              Improve your programming typing speed with real code snippets. 
+              Practice typing in multiple programming languages and track your progress.
+            </p>
+            <p className="text-neutral-300 text-sm text-right mt-4 px-4"> Want to contribute or suggest changes? Make a pull request at{' '}
+              <a 
+                className="hover:underline text-green-400" 
+                href="https://github.com/seanamir30/codetyper" 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >github.com/seanamir30/codetyper</a></p>
+          </div>
         </header>
 
         {/* Main Content */}
-        <section className="flex flex-col items-center gap-6 mb-12 mt-4 w-full xl:max-w-5xl px-4">
+        <section className="flex flex-col items-center gap-6 mb-12 mt-4 w-full md:max-w-5xl px-4">
           <h2 className="sr-only">Typing Test Interface</h2>
           <TextArea
             generatedCode={generatedCode} 
@@ -187,7 +196,7 @@ function App() {
         </section>
 
         {/* Statistics and Controls */}
-        <section className="flex flex-col xl:flex-row items-center xl:items-start px-4 sm:px-8 xl:px-0 gap-10 relative w-full xl:max-w-5xl">
+        <section className="flex flex-col md:flex-row items-center md:items-start px-4 sm:px-8 md:px-0 gap-10 relative w-full md:max-w-5xl">
           
           {/* Statistics Panel */}
           <aside className="flex flex-col text-white w-64 flex-shrink-0 gap-6" role="complementary" aria-label="Detailed typing statistics">
@@ -214,9 +223,9 @@ function App() {
           <div className="flex flex-col gap-6">
             
             {/* Language Selection */}
-            <fieldset className="flex flex-col items-center xl:items-start gap-2">
+            <fieldset className="flex flex-col items-center md:items-start gap-2">
               <legend className="text-white text-2xl font-semibold mb-2">Programming Languages</legend>
-              <div className="flex flex-wrap justify-center xl:justify-start gap-2" role="radiogroup" aria-label="Select programming language">
+              <div className="flex flex-wrap justify-center md:justify-start gap-2" role="radiogroup" aria-label="Select programming language">
                 {languageKeys.map((languageKey)=>{
                   return(
                     <button 
@@ -235,9 +244,9 @@ function App() {
             </fieldset>
 
             {/* Duration Selection */}
-            <fieldset className="flex flex-col items-center xl:items-start gap-2">
+            <fieldset className="flex flex-col items-center md:items-start gap-2">
               <legend className="text-white text-2xl font-semibold mb-2">Test Duration</legend>
-              <div className="flex flex-wrap justify-center xl:justify-start gap-2" role="radiogroup" aria-label="Select test duration">
+              <div className="flex flex-wrap justify-center md:justify-start gap-2" role="radiogroup" aria-label="Select test duration">
                 {durations.map((duration)=>(
                   <button 
                     key={duration}
