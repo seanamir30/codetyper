@@ -122,4 +122,4 @@ This project is open source and available under the [MIT License](LICENSE).
 
 **Start improving your coding speed today!** 🔥
 
-Visit [CodeTyper](https://codetyper.com) to begin your typing journey. 
+Visit [CodeTyper](https://codetyper.seancafe.com) to begin your typing journey. 
