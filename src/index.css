@@ -2,11 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
-@font-face {
-  font-family: "Consolas";
-  src: url("/fonts/Consolas.ttf") format("truetype")
+:root {
+  color-scheme: dark;
 }
 
-.comment {
-  @apply !text-green-700;
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background: #323437;
+  color: #d1d0c5;
+  font-family: 'Roboto Mono', Consolas, ui-monospace, monospace;
+}
+
+@keyframes caretBlink {
+  50% { opacity: 0; }
+}
+
+.caret {
+  animation: caretBlink 1s steps(1) infinite;
 }

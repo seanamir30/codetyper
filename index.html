@@ -3,30 +3,70 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-    <!-- Fallback Meta Tags (will be overridden by Helmet) -->
+
+    <!-- Fallback Meta Tags (will be overridden by Helmet for dynamic pages) -->
     <title>CodeTyper - Typing Test for Programmers | Improve Your Coding Speed</title>
     <meta name="description" content="Practice typing with real code! CodeTyper is a specialized typing test designed for programmers featuring multiple programming languages including JavaScript, Python, Java, and more. Improve your coding speed and accuracy." />
     <meta name="keywords" content="typing test, programming, code typing, developer tools, typing speed, JavaScript, Python, Java, coding practice, WPM, CPM, programmer typing test" />
-    <meta name="author" content="CodeTyper" />
+    <meta name="author" content="sean cafe" />
     <meta name="robots" content="index, follow" />
-    
+
     <!-- Canonical URL -->
     <link rel="canonical" href="https://codetyper.seancafe.com" />
-    
+
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate icon" href="/favicon.ico" />
-    
+
     <!-- Manifest -->
     <link rel="manifest" href="/manifest.json" />
-    
+
     <!-- Theme Color -->
-    <meta name="theme-color" content="#10b981" />
-    
+    <meta name="theme-color" content="#323437" />
+
+    <!-- Open Graph (static fallback; Helmet overrides per-view) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://codetyper.seancafe.com" />
+    <meta property="og:title" content="CodeTyper - Typing Test for Programmers" />
+    <meta property="og:description" content="A specialized typing test for programmers featuring real code snippets in multiple programming languages. Improve your coding speed and accuracy." />
+    <meta property="og:site_name" content="CodeTyper" />
+    <meta property="og:image" content="https://codetyper.seancafe.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://codetyper.seancafe.com" />
+    <meta name="twitter:title" content="CodeTyper - Typing Test for Programmers" />
+    <meta name="twitter:description" content="A specialized typing test for programmers featuring real code snippets in multiple programming languages." />
+    <meta name="twitter:image" content="https://codetyper.seancafe.com/og-image.png" />
+
     <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+    <!-- JSON-LD structured data (static fallback) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "CodeTyper",
+      "description": "A specialized typing test for programmers featuring real code snippets in multiple programming languages",
+      "url": "https://codetyper.seancafe.com",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Any",
+      "featureList": [
+        "Multiple programming languages support",
+        "Real code snippet practice",
+        "Typing speed measurement (CPM/WPM)",
+        "Accuracy tracking",
+        "Customizable test duration"
+      ],
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "creator": { "@type": "Person", "name": "sean cafe", "url": "https://seancafe.com" }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
