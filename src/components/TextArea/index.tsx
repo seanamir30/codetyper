@@ -247,8 +247,10 @@ const TextArea = ({ language, setRawCPM, disabled, generatedCode, generateNewCod
                 {rendered}
             </div>
             {!isFocused && !disabled && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-sub text-sm">
-                    click or press any key to focus
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="px-5 py-3 rounded-md bg-bg/85 border border-sub/30 text-text text-base sm:text-lg shadow-lg backdrop-blur-sm">
+                        click or press any key to focus
+                    </div>
                 </div>
             )}
         </div>

@@ -10,10 +10,15 @@ import TopBar from "./components/TopBar"
 import ConfigBar from "./components/ConfigBar"
 import Results from "./components/Results"
 import { parseLangSlug, keyToSlug } from "./lib/languages"
+import { supabase } from "./lib/supabase"
+import { useAuth } from "./lib/auth"
+import { useProfile } from "./lib/profile"
 
 function App() {
   const params = useParams<{ slug?: string }>()
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const { profile } = useProfile()
   const urlLangKey = useMemo(() => parseLangSlug(params.slug), [params.slug])
   const isLangPage = urlLangKey !== null
 
@@ -94,6 +99,31 @@ function App() {
   const currentCPM = Math.ceil((rawCPM / ((options.seconds - timer) || 1)) * 60) || 0
   const currentWPM = Math.round(currentCPM / 5) || 0
   const accuracy = Math.round((rawCPM / (incorrectCharacters + rawCPM)) * 100) || 0
+
+  const [savedTestKey, setSavedTestKey] = useState<string | null>(null)
+  useEffect(() => {
+    if (timer !== 0) return
+    if (!user || !profile) return
+    if (rawCPM === 0 && incorrectCharacters === 0) return
+    const key = `${user.id}:${options.seconds}:${options.language}:${rawCPM}:${incorrectCharacters}`
+    if (savedTestKey === key) return
+    setSavedTestKey(key)
+    supabase
+      .from('test_results')
+      .insert({
+        user_id: user.id,
+        language: options.language,
+        seconds: options.seconds,
+        wpm: currentWPM,
+        cpm: currentCPM,
+        accuracy,
+        correct: rawCPM,
+        incorrect: incorrectCharacters,
+      })
+      .then(({ error }) => {
+        if (error) console.error('save result error', error)
+      })
+  }, [timer, user, profile])
 
   const langName = languages[options.language]
 
