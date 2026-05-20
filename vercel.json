@@ -1,5 +1,4 @@
 {
-  "cleanUrls": true,
   "redirects": [
     { "source": "/home", "destination": "/", "permanent": true },
     { "source": "/test", "destination": "/", "permanent": true },
