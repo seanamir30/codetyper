@@ -4,7 +4,6 @@ import { Link, useParams, useNavigate } from "react-router-dom"
 // @ts-ignore
 import { getLanguages, generateRandomCode } from "@whitep4nth3r/random-code"
 import type { Languages } from "../types/random-code"
-import axios from "axios"
 import TextArea from "./components/TextArea"
 import TopBar from "./components/TopBar"
 import ConfigBar from "./components/ConfigBar"
@@ -44,13 +43,6 @@ function App() {
   const [timer, setTimer] = useState(30)
   const [generatedCode, setGeneratedCode] = useState('')
   const [durations] = useState([10, 30, 60, 120, 300])
-
-  useEffect(() => {
-    axios.post(import.meta.env.VITE_ANALYTICS_URL || '', {
-      url: window.location.href,
-      userAgent: window.navigator.userAgent
-    })
-  }, [])
 
   const setCurrentLanguage = (language: keyof Languages) => {
     setOptions(prev => ({ ...prev, language }))
