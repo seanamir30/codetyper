@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useLayoutEffect } from 'react'
 import { Languages } from '../../../types/random-code'
 
 interface TextAreaProp {
@@ -7,19 +7,31 @@ interface TextAreaProp {
     setIncorrectCharacters: React.Dispatch<React.SetStateAction<number>>
     disabled: boolean
     generatedCode: string
-    generateNewCode: Function
+    generateMore: () => string
     incorrectCharacters: number
 }
 
-const TextArea = ({ language, setRawCPM, disabled, generatedCode, generateNewCode, setIncorrectCharacters, incorrectCharacters }: TextAreaProp) => {
+// Trailing whitespace on a line is never typed, so strip it up front.
+const normalize = (s: string) =>
+    s.split(/\r?\n|\r/g).map(l => l.trimEnd()).join('\n')
+
+// How many lines to keep above/below the caret in the DOM. Keeps the rendered
+// node count bounded no matter how long the test runs.
+const LINES_ABOVE = 4
+const LINES_BELOW = 12
+// Append more code once the remaining buffer drops below this many chars.
+const REFILL_THRESHOLD = 200
+
+const TextArea = ({ language, setRawCPM, disabled, generatedCode, generateMore, setIncorrectCharacters, incorrectCharacters }: TextAreaProp) => {
     const [codeInput, setCodeInput] = useState('')
     const [isFocused, setIsFocused] = useState(false)
-    const [activeCodePartial, setActiveCodePartial] = useState('')
-    const [codePartialStart, setCodePartialStart] = useState(0)
-    const [codePartialEnd, setCodePartialEnd] = useState(5)
-    const [codePartials, setCodePartials] = useState<string[]>([''])
+    // The full text to type — grows over time so typing never hits a hard wall.
+    const [target, setTarget] = useState('')
     const [errorFlash, setErrorFlash] = useState(false)
+    const [scrollY, setScrollY] = useState(0)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
+    const contentRef = useRef<HTMLDivElement>(null)
+    const caretRef = useRef<HTMLSpanElement>(null)
 
     const tabWidth = useMemo(() => {
         for (const line of generatedCode.split(/\r?\n/)) {
@@ -29,11 +41,27 @@ const TextArea = ({ language, setRawCPM, disabled, generatedCode, generateNewCod
         return 2
     }, [generatedCode])
 
+    // Seed / reset the buffer whenever a fresh test starts.
+    useEffect(() => {
+        setCodeInput('')
+        setTarget(normalize(generatedCode))
+        setScrollY(0)
+    }, [language, generatedCode])
+
+    // Keep the buffer ahead of the caret — append more code seamlessly.
+    useEffect(() => {
+        if (!target) return
+        if (target.length - codeInput.length < REFILL_THRESHOLD) {
+            const more = normalize(generateMore())
+            if (more) setTarget(prev => prev + '\n' + more)
+        }
+    }, [codeInput.length, target])
+
     useEffect(() => {
         const classifySpaces = (from: number, count: number): [number, number] => {
             let correct = 0, incorrect = 0
             for (let i = 0; i < count; i++) {
-                if (activeCodePartial.charAt(from + i) === ' ') correct++
+                if (target.charAt(from + i) === ' ') correct++
                 else incorrect++
             }
             return [correct, incorrect]
@@ -41,13 +69,8 @@ const TextArea = ({ language, setRawCPM, disabled, generatedCode, generateNewCod
 
         const enterHandler = (e: KeyboardEvent) => {
             if (e.key !== 'Enter') return
-            if (codeInput === '') {
-                e.preventDefault()
-                e.stopPropagation()
-                return
-            }
-            const target = activeCodePartial.charAt(codeInput.length)
-            if (target !== '\n' && target !== '') {
+            const target_ch = target.charAt(codeInput.length)
+            if (target_ch !== '\n' && target_ch !== '') {
                 setIncorrectCharacters(prev => prev + 1)
                 e.preventDefault()
                 e.stopPropagation()
@@ -73,7 +96,7 @@ const TextArea = ({ language, setRawCPM, disabled, generatedCode, generateNewCod
                 return
             }
 
-            const remaining = activeCodePartial.length - codeInput.length
+            const remaining = target.length - codeInput.length
             if (remaining <= 0) return
             const insertN = Math.min(tabWidth, remaining)
             const [correct, incorrect] = classifySpaces(codeInput.length, insertN)
@@ -90,28 +113,7 @@ const TextArea = ({ language, setRawCPM, disabled, generatedCode, generateNewCod
         const el = textareaRef.current
         el?.addEventListener('keydown', keyDownHandler)
         return () => { el?.removeEventListener('keydown', keyDownHandler) }
-    }, [codeInput, activeCodePartial, codePartialStart, tabWidth])
-
-    useEffect(() => {
-        setCodeInput('')
-        const partials = generatedCode.split(/\r?\n|\r|\n/g)
-        setCodePartials(partials)
-        setActiveCodePartial(partials.slice(0, 5).map(p => p.trimEnd()).join('\n'))
-        setCodePartialStart(0)
-        setCodePartialEnd(5)
-    }, [language, generatedCode])
-
-    useEffect(() => {
-        if (codeInput.split(/\r?\n|\r|\n/g).length === activeCodePartial.split(/\r?\n|\r|\n/g).length + 1) {
-            setCodePartialEnd(prev => prev + 5)
-            setCodePartialStart(prev => prev + 5)
-            setActiveCodePartial(codePartials.slice(codePartialStart + 5, codePartialEnd + 5).join('\n'))
-            setCodeInput('')
-        }
-        if (!activeCodePartial) {
-            generateNewCode()
-        }
-    }, [codeInput.split(/\r?\n|\r|\n/g).length === activeCodePartial.split(/\r?\n|\r|\n/g).length + 1])
+    }, [codeInput, target, tabWidth])
 
     useEffect(() => {
         if (incorrectCharacters) {
@@ -134,27 +136,30 @@ const TextArea = ({ language, setRawCPM, disabled, generatedCode, generateNewCod
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         textareaRef.current?.setSelectionRange(codeInput.length, codeInput.length)
-        const target = activeCodePartial.charAt(codeInput.length)
+        const target_ch = target.charAt(codeInput.length)
 
         if (e.key === 'Enter') return
 
-        if (e.key !== target && e.key.length === 1) setIncorrectCharacters(prev => prev + 1)
+        if (e.key !== target_ch && e.key.length === 1) setIncorrectCharacters(prev => prev + 1)
 
         if (e.key === 'Backspace' && codeInput) {
+            // Backspace is a neutral correction — it must never add an error.
             const lastChar = codeInput.charAt(codeInput.length - 1)
-            const targetChar = activeCodePartial.charAt(codeInput.length - 1)
+            const targetChar = target.charAt(codeInput.length - 1)
             if (lastChar === ' ') {
+                // Removing an incorrectly-placed space un-does its earlier error.
                 if (lastChar !== targetChar) {
                     setIncorrectCharacters(prev => Math.max(0, prev - 1))
                 }
                 return
             }
-            setIncorrectCharacters(prev => prev + 1)
-            setRawCPM(prev => prev - 1)
+            // Only correctly-typed characters ever reach the input, so undo the
+            // correct count (the char will be retyped) without any penalty.
+            setRawCPM(prev => Math.max(0, prev - 1))
             return
         }
 
-        if ((e.key !== target) && (e.key !== 'Backspace')) {
+        if ((e.key !== target_ch) && (e.key !== 'Backspace')) {
             e.preventDefault()
             return
         }
@@ -164,13 +169,13 @@ const TextArea = ({ language, setRawCPM, disabled, generatedCode, generateNewCod
 
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         let value = e.target.value
-        if (value.endsWith('\n') && value.length < activeCodePartial.length) {
+        if (value.endsWith('\n') && value.length < target.length) {
             const beforeNewline = value.slice(0, -1)
             const prevNewlineIdx = beforeNewline.lastIndexOf('\n')
             const prevLine = beforeNewline.slice(prevNewlineIdx + 1)
             const prevIndent = (prevLine.match(/^ +/) || [''])[0].length
             let targetLeading = 0
-            while (activeCodePartial.charAt(value.length + targetLeading) === ' ') targetLeading++
+            while (target.charAt(value.length + targetLeading) === ' ') targetLeading++
             const insertN = Math.min(prevIndent, targetLeading)
             if (insertN > 0) {
                 value += ' '.repeat(insertN)
@@ -181,16 +186,49 @@ const TextArea = ({ language, setRawCPM, disabled, generatedCode, generateNewCod
     }
 
     const typed = codeInput.length
+
+    // Only render a window of lines around the caret so the DOM stays small.
+    const lines = useMemo(() => target.split('\n'), [target])
+    const lineStarts = useMemo(() => {
+        const starts: number[] = []
+        let acc = 0
+        for (const l of lines) { starts.push(acc); acc += l.length + 1 }
+        return starts
+    }, [lines])
+    const currentRow = useMemo(() => {
+        let n = 0
+        for (let i = 0; i < typed; i++) if (target.charAt(i) === '\n') n++
+        return n
+    }, [typed, target])
+
+    const windowStart = Math.max(0, currentRow - LINES_ABOVE)
+    const windowEnd = Math.min(lines.length - 1, currentRow + LINES_BELOW)
+    const startIdx = lineStarts[windowStart] ?? 0
+    const endIdx = windowEnd + 1 < lineStarts.length ? lineStarts[windowEnd + 1] - 1 : target.length
+
+    // Keep the caret roughly two lines from the top as the text scrolls.
+    useLayoutEffect(() => {
+        const content = contentRef.current
+        const caret = caretRef.current
+        if (!content) return
+        if (!caret) return // keep current position when caret isn't shown (e.g. blurred)
+        const cs = getComputedStyle(content)
+        let lh = parseFloat(cs.lineHeight)
+        if (!lh || Number.isNaN(lh)) lh = (parseFloat(cs.fontSize) || 24) * 1.6
+        setScrollY(Math.max(0, caret.offsetTop - lh * 2))
+    }, [typed, target, windowStart])
+
     const caretCls = `caret inline-block w-[2px] align-middle -mr-[2px] rounded-sm ${errorFlash ? 'bg-error' : 'bg-main'}`
     const caretStyle = { height: '1.1em' }
+    const showCaret = isFocused && !disabled
 
     const rendered: React.ReactNode[] = []
-    for (let i = 0; i < activeCodePartial.length; i++) {
-        const ch = activeCodePartial[i]
+    for (let i = startIdx; i < endIdx; i++) {
+        const ch = target[i]
         const typedCh = i < typed ? codeInput[i] : undefined
 
-        if (i === typed && isFocused && !disabled) {
-            rendered.push(<span key={`caret-${i}`} className={caretCls} style={caretStyle} />)
+        if (i === typed && showCaret) {
+            rendered.push(<span key={`caret-${i}`} ref={caretRef} className={caretCls} style={caretStyle} />)
         }
 
         if (ch === '\n') {
@@ -213,14 +251,15 @@ const TextArea = ({ language, setRawCPM, disabled, generatedCode, generateNewCod
         }
         rendered.push(<span key={i} className={cls}>{content}</span>)
     }
-    if (typed >= activeCodePartial.length && isFocused && !disabled) {
-        rendered.push(<span key="caret-end" className={caretCls} style={caretStyle} />)
+    if (typed >= endIdx && showCaret) {
+        rendered.push(<span key="caret-end" ref={caretRef} className={caretCls} style={caretStyle} />)
     }
 
     return (
         <div
             onClick={() => textareaRef.current?.focus()}
             className="relative w-full cursor-text font-mono"
+            style={{ fontSize: 'clamp(20px, 2.5vw, 28px)' }}
         >
             <textarea
                 ref={textareaRef}
@@ -239,12 +278,18 @@ const TextArea = ({ language, setRawCPM, disabled, generatedCode, generateNewCod
             />
             <div
                 aria-hidden
-                className={`whitespace-pre-wrap leading-[1.6] tracking-wide transition duration-200 ${
+                className={`overflow-hidden transition duration-200 ${
                     !isFocused && !disabled ? 'blur-[3px]' : ''
                 }`}
-                style={{ fontSize: 'clamp(20px, 2.5vw, 28px)' }}
+                style={{ height: '9.6em' }}
             >
-                {rendered}
+                <div
+                    ref={contentRef}
+                    className="relative whitespace-pre-wrap leading-[1.6] tracking-wide transition-transform duration-150 ease-out"
+                    style={{ transform: `translateY(-${scrollY}px)` }}
+                >
+                    {rendered}
+                </div>
             </div>
             {!isFocused && !disabled && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

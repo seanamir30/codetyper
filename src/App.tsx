@@ -13,6 +13,8 @@ import { supabase } from "./lib/supabase"
 import { useAuth } from "./lib/auth"
 import { useProfile } from "./lib/profile"
 
+type Mode = 'timed' | 'practice'
+
 function App() {
   const params = useParams<{ slug?: string }>()
   const navigate = useNavigate()
@@ -33,6 +35,7 @@ function App() {
   const [options, setOptions] = useState({
     seconds: 30,
     language: (urlLangKey || 'js') as keyof Languages,
+    mode: 'timed' as Mode,
   })
 
   useEffect(() => {
@@ -41,6 +44,8 @@ function App() {
     }
   }, [urlLangKey])
   const [timer, setTimer] = useState(30)
+  const [elapsed, setElapsed] = useState(0)
+  const [finished, setFinished] = useState(false)
   const [generatedCode, setGeneratedCode] = useState('')
   const [durations] = useState([10, 30, 60, 120, 300])
 
@@ -52,12 +57,26 @@ function App() {
     setOptions(prev => ({ ...prev, seconds: duration }))
   }
 
+  const setMode = (mode: Mode) => {
+    setOptions(prev => ({ ...prev, mode }))
+  }
+
+  // Countdown — timed mode only.
   useEffect(() => {
+    if (options.mode !== 'timed') return
     const ticktock = setInterval(() => {
       if ((rawCPM >= 1 && timer > 0) || (timer < options.seconds && timer > 0)) setTimer(count => count - 1)
     }, 1000)
     return () => clearInterval(ticktock)
-  }, [timer, isActive])
+  }, [timer, isActive, options.mode])
+
+  // Count-up — practice mode only, runs while the test is active.
+  useEffect(() => {
+    if (options.mode !== 'practice') return
+    if (!isActive || finished) return
+    const id = setInterval(() => setElapsed(e => e + 1), 1000)
+    return () => clearInterval(id)
+  }, [options.mode, isActive, finished])
 
   useEffect(() => {
     if (rawCPM) setIsActive(true)
@@ -70,6 +89,9 @@ function App() {
     setRawCPM(0)
     setGeneratedCode(generateCode(options.language))
     setTimer(options.seconds)
+    setElapsed(0)
+    setFinished(false)
+    setNewBest(false)
     setIncorrectCharacters(0)
   }
 
@@ -77,29 +99,60 @@ function App() {
     reset()
   }, [options])
 
+  const testOver = options.mode === 'timed' ? timer === 0 : finished
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (timer === 0 && e.key === 'Tab') {
+      if (testOver && e.key === 'Tab') {
         e.preventDefault()
         reset()
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [timer, options])
+  }, [testOver, options])
 
-  const currentCPM = Math.ceil((rawCPM / ((options.seconds - timer) || 1)) * 60) || 0
+  const elapsedSeconds = options.mode === 'timed' ? (options.seconds - timer) : elapsed
+  const currentCPM = Math.ceil((rawCPM / (elapsedSeconds || 1)) * 60) || 0
   const currentWPM = Math.round(currentCPM / 5) || 0
   const accuracy = Math.round((rawCPM / (incorrectCharacters + rawCPM)) * 100) || 0
 
+  // Personal best (timed mode) — best WPM for the current language + duration.
+  const [pb, setPb] = useState<number | null>(null)
+  const [newBest, setNewBest] = useState(false)
   const [savedTestKey, setSavedTestKey] = useState<string | null>(null)
+
   useEffect(() => {
-    if (timer !== 0) return
+    if (!user || options.mode !== 'timed') {
+      setPb(null)
+      return
+    }
+    let cancelled = false
+    supabase
+      .from('test_results')
+      .select('wpm')
+      .eq('user_id', user.id)
+      .eq('language', options.language)
+      .eq('seconds', options.seconds)
+      .order('wpm', { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        if (!cancelled) setPb(data && data.length ? data[0].wpm : null)
+      })
+    return () => { cancelled = true }
+  }, [user, options.language, options.seconds, options.mode, savedTestKey])
+
+  // Persist results — timed mode only, so leaderboards stay comparable.
+  useEffect(() => {
+    if (!testOver) return
+    if (options.mode !== 'timed') return
     if (!user || !profile) return
     if (rawCPM === 0 && incorrectCharacters === 0) return
     const key = `${user.id}:${options.seconds}:${options.language}:${rawCPM}:${incorrectCharacters}`
     if (savedTestKey === key) return
     setSavedTestKey(key)
+    // Capture whether this run beat the pre-test best (pb still holds the old value).
+    setNewBest(pb === null ? currentWPM > 0 : currentWPM > pb)
     supabase
       .from('test_results')
       .insert({
@@ -115,7 +168,7 @@ function App() {
       .then(({ error }) => {
         if (error) console.error('save result error', error)
       })
-  }, [timer, user, profile])
+  }, [testOver, user, profile])
 
   const langName = languages[options.language]
 
@@ -164,8 +217,6 @@ function App() {
     "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "reviewCount": "1200" }
   }
 
-  const testOver = timer === 0
-
   return (
     <>
       <Helmet>
@@ -195,6 +246,8 @@ function App() {
           durations={durations}
           currentDuration={options.seconds}
           setDuration={setDuration}
+          mode={options.mode}
+          setMode={setMode}
           locked={isActive && !testOver}
         />
 
@@ -206,30 +259,63 @@ function App() {
               accuracy={accuracy}
               correct={rawCPM}
               incorrect={incorrectCharacters}
-              seconds={options.seconds}
+              seconds={elapsedSeconds}
               language={languages[options.language]}
+              mode={options.mode}
+              onRestart={reset}
+              personalBest={pb}
+              isPersonalBest={newBest}
             />
           ) : (
             <>
-              <div className="w-full text-main text-3xl mb-4" aria-label={`Time remaining: ${timer} seconds`}>
-                {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}
+              <div className="w-full flex items-center justify-between mb-4">
+                <div className="text-main text-3xl" aria-label={options.mode === 'timed' ? `Time remaining: ${timer} seconds` : `Elapsed: ${elapsed} seconds`}>
+                  {options.mode === 'timed'
+                    ? `${Math.floor(timer / 60)}:${(timer % 60).toString().padStart(2, '0')}`
+                    : `${Math.floor(elapsed / 60)}:${(elapsed % 60).toString().padStart(2, '0')}`}
+                </div>
+                <div className="flex items-center gap-6 text-right">
+                  {isActive && (
+                    <div aria-label={`Current speed: ${currentWPM} words per minute`}>
+                      <span className="text-text text-2xl">{currentWPM}</span>
+                      <span className="text-sub text-sm ml-1">wpm</span>
+                    </div>
+                  )}
+                  {options.mode === 'timed' && pb !== null && (
+                    <div className="text-sub text-sm" aria-label={`Personal best: ${pb} words per minute`}>
+                      pb <span className="text-main">{pb}</span>
+                    </div>
+                  )}
+                </div>
               </div>
               <TextArea
                 generatedCode={generatedCode}
-                generateNewCode={() => setGeneratedCode(generateCode(options.language))}
+                generateMore={() => generateCode(options.language)}
                 language={options.language}
                 setRawCPM={setRawCPM}
                 setIncorrectCharacters={setIncorrectCharacters}
                 incorrectCharacters={incorrectCharacters}
                 disabled={testOver}
               />
-              <button
-                onClick={reset}
-                className="mt-10 text-sub hover:text-text transition text-xl"
-                aria-label="Restart test"
-              >
-                ↻
-              </button>
+              <div className="mt-10 flex items-center gap-6">
+                <button
+                  onClick={reset}
+                  className="text-sub hover:text-text transition text-xl"
+                  aria-label="Restart test"
+                >
+                  ↻
+                </button>
+                {options.mode === 'practice' && (
+                  <button
+                    onClick={() => setFinished(true)}
+                    disabled={rawCPM === 0}
+                    className="text-sm border border-sub/30 rounded px-4 py-1.5 text-sub hover:text-text hover:border-sub transition disabled:opacity-30 disabled:cursor-not-allowed"
+                    aria-label="Finish practice and see results"
+                  >
+                    finish
+                  </button>
+                )}
+              </div>
             </>
           )}
         </section>

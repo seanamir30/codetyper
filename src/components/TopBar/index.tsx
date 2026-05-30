@@ -18,6 +18,14 @@ const CrownIcon = () => (
     </svg>
 )
 
+const HistoryIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+        <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+        <path d="M3 4v4h4" />
+        <path d="M12 8v4l3 2" />
+    </svg>
+)
+
 const TopBar = () => {
     const { user, loading, signOut } = useAuth()
     const { profile } = useProfile()
@@ -54,6 +62,11 @@ const TopBar = () => {
                     <NavLink to="/leaderboards" className={navClass} aria-label="Leaderboards">
                         <CrownIcon />
                     </NavLink>
+                    {user && (
+                        <NavLink to="/history" className={navClass} aria-label="Your history">
+                            <HistoryIcon />
+                        </NavLink>
+                    )}
                 </nav>
             </div>
 

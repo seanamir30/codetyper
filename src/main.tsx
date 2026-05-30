@@ -7,6 +7,7 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import AuthCallback from './pages/AuthCallback'
 import Leaderboards from './pages/Leaderboards'
+import History from './pages/History'
 import { AuthProvider } from './lib/auth'
 import { ProfileProvider } from './lib/profile'
 import UsernameModal from './components/UsernameModal'
@@ -25,6 +26,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
             <Route path="/signup" element={<Signup />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/leaderboards" element={<Leaderboards />} />
+            <Route path="/history" element={<History />} />
             <Route path="/:slug" element={<App />} />
           </Routes>
           <UsernameModal />
